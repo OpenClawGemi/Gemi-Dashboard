@@ -1,0 +1,24 @@
+{
+  "system": {
+    "node": "online",
+    "github": "connected",
+    "cpu": "normal",
+    "lastUpdate": "10:11"
+  },
+  "focus": {
+    "title": "Dashboard Upgrade",
+    "phase": "UI & UX Redesign",
+    "progress": 30,
+    "details": "Layout wird komplett überarbeitet für bessere Übersicht."
+  },
+  "queue": [
+    { "task": "Yoga Book 'VOID' Concept", "priority": "high" },
+    { "task": "GitHub Repo Setup", "priority": "medium" },
+    { "task": "Memory Cleanup", "priority": "low" }
+  ],
+  "logs": [
+    { "time": "10:11", "msg": "Starte Dashboard 2.0 Entwicklung." },
+    { "time": "10:05", "msg": "GitHub Login erfolgreich." },
+    { "time": "10:04", "msg": "Node Verbindung wiederhergestellt." }
+  ]
+}

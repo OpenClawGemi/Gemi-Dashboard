@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemi OS // Dashboard</title>
+    <style>
+        :root {
+            --bg: #050505;
+            --panel: #111;
+            --border: #222;
+            --text-main: #eee;
+            --text-dim: #666;
+            --accent: #fff;
+            --success: #00ff88;
+            --font-mono: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+            --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            color: var(--text-main);
+            font-family: var(--font-ui);
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            grid-template-rows: auto auto 1fr;
+            gap: 20px;
+            width: 100%;
+            max-width: 1000px;
+            height: 85vh;
+        }
+
+        /* --- Components --- */
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            padding: 24px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h2 {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-dim);
+            margin: 0 0 16px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Header / System Status */
+        .header {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        
+        .brand { font-weight: 700; font-size: 1.2rem; letter-spacing: -0.5px; }
+        .sys-indicators { display: flex; gap: 20px; font-family: var(--font-mono); font-size: 12px; }
+        .indicator { display: flex; align-items: center; gap: 8px; color: var(--text-dim); }
+        .indicator.active { color: var(--success); }
+        .dot { width: 6px; height: 6px; background: currentColor; border-radius: 50%; box-shadow: 0 0 8px currentColor; }
+
+        /* Focus Area (Main) */
+        .focus-area {
+            grid-column: 1 / 2;
+            grid-row: 2 / 3;
+            background: linear-gradient(145deg, #161616, #0a0a0a);
+            border-color: #333;
+        }
+        
+        .focus-title { font-size: 2rem; font-weight: 600; margin-bottom: 8px; line-height: 1.1; }
+        .focus-phase { color: var(--text-dim); font-size: 1rem; margin-bottom: 24px; }
+        .progress-bar { height: 4px; background: #222; width: 100%; border-radius: 2px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.5s ease; }
+        .focus-details { margin-top: 20px; font-size: 0.9rem; line-height: 1.5; color: #aaa; }
+
+        /* Queue (Side) */
+        .queue-area {
+            grid-column: 2 / 3;
+            grid-row: 2 / 4;
+        }
+
+        .queue-item {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+        }
+        .queue-item:last-child { border-bottom: none; }
+        .tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; font-weight: bold; }
+        .tag.high { background: rgba(255, 50, 50, 0.2); color: #ff5555; }
+        .tag.medium { background: rgba(255, 170, 0, 0.2); color: #ffaa00; }
+        .tag.low { background: rgba(255, 255, 255, 0.1); color: #888; }
+
+        /* Terminal / Logs */
+        .log-area {
+            grid-column: 1 / 2;
+            grid-row: 3 / 4;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            overflow: hidden;
+        }
+        
+        #logs {
+            overflow-y: auto;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .log-entry { display: flex; gap: 12px; color: #888; }
+        .log-time { color: #444; min-width: 45px; }
+        .log-msg { color: #bbb; }
+
+        /* Login Overlay */
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 100;
+            display: flex; justify-content: center; align-items: center;
+        }
+        input {
+            background: transparent; border: none; border-bottom: 1px solid #333;
+            color: white; font-size: 1.5rem; text-align: center; outline: none;
+            width: 150px; font-family: var(--font-mono);
+        }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <input type="password" id="pass" placeholder="PIN" maxlength="20">
+    </div>
+
+    <div id="main" class="hidden" style="width: 100%; max-width: 1000px;">
+        <div class="header">
+            <div class="brand">GEMI // OS</div>
+            <div class="sys-indicators">
+                <div class="indicator" id="ind-node"><div class="dot"></div>NODE</div>
+                <div class="indicator" id="ind-gh"><div class="dot"></div>GITHUB</div>
+                <div class="indicator"><span id="last-update">--:--</span></div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- Main Focus -->
+            <div class="panel focus-area">
+                <h2>Current Operation</h2>
+                <div class="focus-title" id="focus-title">Loading...</div>
+                <div class="focus-phase" id="focus-phase">...</div>
+                <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+                <div class="focus-details" id="focus-details"></div>
+            </div>
+
+            <!-- Queue -->
+            <div class="panel queue-area">
+                <h2>Command Queue</h2>
+                <div id="queue-list"></div>
+            </div>
+
+            <!-- Logs -->
+            <div class="panel log-area">
+                <h2>System Logs</h2>
+                <div id="logs"></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const passInput = document.getElementById('pass');
+    passInput.focus();
+    passInput.addEventListener('keyup', (e) => { 
+        if(e.key === 'Enter') {
+            if(passInput.value === 'simon01') {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('main').classList.remove('hidden');
+                init();
+            } else {
+                passInput.style.borderColor = 'red';
+                passInput.value = '';
+            }
+        }
+    });
+
+    async function init() {
+        loadData();
+        setInterval(loadData, 2000);
+    }
+
+    async function loadData() {
+        try {
+            const res = await fetch('status.json?t=' + Date.now());
+            const data = await res.json();
+            
+            // System
+            updateIndicator('ind-node', data.system.node === 'online');
+            updateIndicator('ind-gh', data.system.github === 'connected' || data.system.github === 'logged_in');
+            document.getElementById('last-update').innerText = data.system.lastUpdate;
+
+            // Focus
+            document.getElementById('focus-title').innerText = data.focus.title;
+            document.getElementById('focus-phase').innerText = data.focus.phase;
+            document.getElementById('progress').style.width = data.focus.progress + '%';
+            document.getElementById('focus-details').innerText = data.focus.details;
+
+            // Queue
+            const queueHTML = data.queue.map(item => `
+                <div class="queue-item">
+                    <span>${item.task}</span>
+                    <span class="tag ${item.priority}">${item.priority}</span>
+                </div>
+            `).join('');
+            document.getElementById('queue-list').innerHTML = queueHTML;
+
+            // Logs
+            const logsHTML = data.logs.map(l => `
+                <div class="log-entry">
+                    <span class="log-time">${l.time}</span>
+                    <span class="log-msg">${l.msg}</span>
+                </div>
+            `).join('');
+            document.getElementById('logs').innerHTML = logsHTML;
+
+        } catch(e) { console.error(e); }
+    }
+
+    function updateIndicator(id, active) {
+        const el = document.getElementById(id);
+        if(active) el.classList.add('active');
+        else el.classList.remove('active');
+    }
+</script>
+</body>
+</html>
